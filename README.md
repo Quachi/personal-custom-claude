@@ -88,9 +88,51 @@ Le plus spécifique complète ou remplace le plus général.
 
 **Où** : dans la clé `hooks` d'un `settings.json`.
 
-**État** : aucun hook n'est présent dans `~/.claude/settings.json` ni dans ce dépôt.
+### Exemple : le hook de synchronisation `SessionStart`
 
-- [ ] Retrouver ou recréer le hook, puis documenter : événement déclencheur, rôle, script, emplacement.
+**Objectif** : garder dans ce dépôt une copie à jour de ma configuration user (`~/.claude`), pour la versionner et la retrouver sur une autre machine. Le dépôt n'est pas dans `~/.claude` : il faut donc une copie, faite automatiquement à chaque démarrage de session.
+
+**Événement** : `SessionStart`, déclenché quand une session démarre ou reprend.
+
+**Déclaration** (clé `hooks` de `~/.claude/settings.json`) :
+
+```json
+"hooks": {
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash C:/Users/Maki/.claude/hooks/sync-user-config.sh"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Le script** (`~/.claude/hooks/sync-user-config.sh`) :
+
+| Source (`~/.claude/`) | Copie (`user-config/`) | Mode |
+|---|---|---|
+| `CLAUDE.md`, `settings.json`, `statusline-command.sh` | mêmes noms | fichier écrasé |
+| `skills/`, `commands/`, `agents/`, `hooks/` | mêmes noms | miroir : dossier vidé puis recopié |
+
+1. **Copie à sens unique** : `~/.claude` → dépôt, jamais l'inverse.
+2. **Miroir** : un skill supprimé côté user disparaît aussi de la copie. Un dossier absent côté user (`commands/`, `agents/` n'existent pas encore) est ignoré.
+3. **Exclusion de `skills/synced/`** : skills Anthropic gérés automatiquement, volumineux et qui ne sont pas les miens.
+4. **Commit et push** : seul `user-config/` est ajouté (`git add -A -- user-config`). S'il n'y a aucun changement, rien n'est commité. Le message est « Synchronise la configuration user de Claude Code ». Un échec du push ne bloque pas le démarrage de la session (le script termine toujours en `exit 0`).
+
+**Le `.gitignore` en liste blanche** : tout est ignoré (`*`) sauf ce qui est listé. Pour chaque dossier (`skills/`, `commands/`, `agents/`, `hooks/`), il faut **deux lignes** : `!/user-config/<dossier>/` pour ré-inclure le dossier, puis `!/user-config/<dossier>/**` pour son contenu. Avec une seule des deux, git ignore les fichiers sans le dire.
+
+**Pièges rencontrés**
+
+- Le `.gitignore` ignorait le contenu de `skills/` et `hooks/` : `git status` ne montrait rien. Voir la règle des deux lignes ci-dessus.
+- Les règles `ask` de `git commit` et `git push` (section 2) ne concernent que les appels faits par Claude. Un hook s'exécute sans confirmation : il commit et pousse tout seul, à chaque session.
+- Le chemin du dépôt est écrit en dur dans le script : à adapter sur une autre machine.
+- `settings.json` est copié tel quel et poussé : y mettre un secret (token, clé) le publierait. Les secrets vont dans une variable d'environnement, jamais dans ce fichier.
+
+**Vérifier** : lancer le script à la main (`bash ~/.claude/hooks/sync-user-config.sh`), puis `git log -1 --stat`. Pour tester le déclenchement, relancer Claude Code.
 
 ---
 
