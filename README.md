@@ -1,53 +1,159 @@
 # personal-custom-claude
 
-Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https://claude.com/claude-code) pas à pas et je garde ici une trace de ce que je fais et de ce que j'apprends.
+Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https://claude.com/claude-code) thème par thème. Chaque section explique **ce que je configure, où, et pourquoi**.
 
-## Parcours
+## Sommaire
 
-| Étape | Sujet | Statut |
+1. [Règles de comportement : `CLAUDE.md`](#1-règles-de-comportement--claudemd)
+2. [Permissions et réglages : `settings.json`](#2-permissions-et-réglages--settingsjson)
+3. [Les trois niveaux de configuration](#3-les-trois-niveaux-de-configuration)
+4. [Hooks](#4-hooks)
+5. [Skills](#5-skills)
+6. [Versionnement : `.gitignore`](#6-versionnement--gitignore)
+7. [Ressources](#7-ressources)
+
+---
+
+## 1. Règles de comportement : `CLAUDE.md`
+
+**À quoi ça sert** : `CLAUDE.md` est un fichier de consignes que Claude relit à chaque session. C'est le bon endroit pour décrire *comment* je veux qu'il travaille, pas ce qu'il a le droit de faire (voir section 2).
+
+**Où** : `~/.claude/CLAUDE.md` (global, valable pour tous mes projets). Un `CLAUDE.md` à la racine d'un projet s'applique en plus, uniquement à ce projet.
+
+### Règle « Never guess »
+
+- **Règle** : ne jamais deviner. Si une information manque, Claude me la demande avant d'agir.
+- **Quand il doit demander** : valeurs métier introuvables dans le code (taux, seuils, dates…), comportement attendu sur les cas limites ou les erreurs, emplacement/nom/forme de ce qu'il doit créer quand plusieurs options existent, autorisation de modifier un comportement existant.
+- **Quand il ne doit pas demander** : si une convention du code ou du langage répond déjà (nommage, organisation des tests, formatage). Il l'applique et le mentionne.
+- **Format** : toutes les questions en un seul lot, avant d'écrire du code.
+- **Pourquoi** : une valeur inventée mais plausible est pire qu'une question, car l'erreur passe inaperçue. Le lot unique évite les allers-retours.
+
+### Règle « DRY code »
+
+- **Règle** : chaque connaissance (logique, constante, règle, table de données) a une seule représentation dans le code.
+- **Méthode** : avant d'écrire, Claude cherche l'existant par comportement et par mots-clés (y compris dans une autre langue que l'anglais), puis réutilise, étend ou remplace. Si une signature change, il met à jour appelants et tests ; si un code est remplacé, l'ancien est supprimé dans le même changement.
+- **Compte rendu** : il indique ce qu'il a réutilisé, étendu ou remplacé, ou dit explicitement qu'il n'a rien trouvé.
+- **Pourquoi** : éviter les doublons qui divergent avec le temps.
+
+> Bonne pratique retenue : une règle = un titre, des puces vérifiables, et le « pourquoi » à côté. Une consigne vague (« écris du bon code ») ne change rien au comportement.
+
+---
+
+## 2. Permissions et réglages : `settings.json`
+
+**À quoi ça sert** : contrairement à `CLAUDE.md`, ce fichier est appliqué par Claude Code lui-même. Ce n'est pas une demande faite au modèle, c'est une barrière.
+
+**Où** : `~/.claude/settings.json` (scope user).
+
+### Permissions
+
+| Catégorie | Effet | Ce que j'y ai mis |
 |---|---|---|
-| 1 | Instructions globales (`CLAUDE.md`) | Fait |
-| 2 | Settings scope user | Fait |
-| 3 | Settings scope projet | Fait |
-| 4 | Hook | Fait (à documenter) |
-| 5 | Skills personnalisés | À venir |
+| `allow` | exécuté sans confirmation | `Read`, `Glob`, `Grep`, `git status/diff/log/branch`, `ls`, `pwd` |
+| `ask` | confirmation à chaque fois | `git push`, `git commit`, `npm publish` |
+| `deny` | interdit | lecture de `.env`, `.env.*`, `secrets/**` ; `rm -rf` ; `curl` |
 
-## Journal
+**Logique** : j'autorise ce qui est en lecture seule, je fais valider ce qui est difficile à annuler ou visible de l'extérieur (publier, committer), j'interdis ce qui est destructeur ou peut exposer des secrets.
 
-### 2026-11-18 : premières bases
+### Autres réglages
 
-**Ce que j'ai mis en place**
+- `defaultMode: auto` : mode de permission par défaut.
+- `model: sonnet`, effort `medium` pour `claude-sonnet-5-5` : compromis vitesse/qualité.
+- `theme: dark`, `autoUpdatesChannel: latest` : confort et mises à jour.
 
-- `~/.claude/CLAUDE.md` : deux règles de comportement pour Claude.
-  - *Never guess* : il pose ses questions en un seul lot avant d'agir au lieu de deviner.
-  - *DRY code* : il cherche le code existant avant d'en écrire du nouveau, puis réutilise, étend ou remplace.
-- `~/.claude/settings.json` (scope user) :
-  - permissions **allow** : `Read`, `Glob`, `Grep`, `git status/diff/log/branch`, `ls`, `pwd` ;
-  - permissions **ask** : `git push`, `git commit`, `npm publish` ;
-  - permissions **deny** : lecture de `.env`, `.env.*`, `secrets/**` ; `rm -rf` ; `curl` ;
-  - modèle `sonnet`, effort `medium`, thème `dark`, mises à jour `latest`.
-- Un settings scope projet (`.claude/settings.json`).
-- Un hook.
+---
 
-**Ce que j'ai appris**
+## 3. Les trois niveaux de configuration
 
-- Les settings existent à trois niveaux : *user* (`~/.claude/settings.json`, tous les projets), *projet* (`.claude/settings.json`, partagé via git) et *local* (`.claude/settings.local.json`, personnel, non versionné). Le plus spécifique complète ou remplace le plus général.
-- Les permissions se rangent en trois catégories : `allow` (sans confirmation), `ask` (confirmation) et `deny` (interdit).
-- `CLAUDE.md` sert à donner des consignes durables de comportement, alors que `settings.json` règle les permissions et la configuration.
-- Un hook est une automatisation exécutée par Claude Code lui-même à un moment précis (avant ou après un outil, à la fin d'une réponse…), et non une simple consigne donnée à Claude.
+| Niveau | Fichier | Portée | Versionné |
+|---|---|---|---|
+| User | `~/.claude/settings.json` | tous mes projets | non |
+| Projet | `.claude/settings.json` | ce dépôt, partagé avec l'équipe | oui |
+| Local | `.claude/settings.local.json` | ce dépôt, juste pour moi | non |
 
-**À compléter**
+Le plus spécifique complète ou remplace le plus général.
 
-- [ ] Hook : événement déclencheur, rôle, script, emplacement. Aucun hook n'est visible dans `~/.claude/settings.json` ni dans ce dépôt, à retrouver ou à décrire.
-- [ ] Settings projet : y noter ce qu'ils contiennent et pourquoi.
+**Règle de choix** : ce qui est mon goût personnel va en user ; ce dont l'équipe a besoin pour travailler pareil va en projet ; ce qui est à moi mais propre à ce dépôt va en local.
 
-## Prochaines étapes : skills personnalisés
+**État** : le settings projet n'existe pas encore dans ce dépôt.
 
-Un skill est un ensemble d'instructions réutilisable, dans `.claude/skills/<nom>/SKILL.md` (projet) ou `~/.claude/skills/` (global).
+- [ ] Créer `.claude/settings.json` et y noter son contenu et sa raison d'être.
 
-- [ ] Skill 1 : à définir
-- [ ] Skill 2 : à définir
+---
 
-## Ressources
+## 4. Hooks
+
+**Principe** : un hook est une commande exécutée automatiquement par Claude Code à un moment précis (avant/après un outil, à la fin d'une réponse…). Contrairement à `CLAUDE.md`, il ne dépend pas de la bonne volonté du modèle.
+
+**Où** : dans la clé `hooks` d'un `settings.json`.
+
+**État** : aucun hook n'est présent dans `~/.claude/settings.json` ni dans ce dépôt.
+
+- [ ] Retrouver ou recréer le hook, puis documenter : événement déclencheur, rôle, script, emplacement.
+
+---
+
+## 5. Skills
+
+**Principe** : un skill est un jeu d'instructions réutilisable, chargé à la demande (par `/nom` ou quand sa description correspond à la tâche).
+
+**Où** : `~/.claude/skills/<nom>/SKILL.md` (global) ou `.claude/skills/<nom>/SKILL.md` (projet).
+
+### Exemple : le skill `init-gitignore`
+
+**Objectif** : générer un `.gitignore` adapté au projet, en demandant à l'utilisateur son langage, son framework et son éditeur au lieu de les deviner (ce qui applique la règle « Never guess » de la section 1).
+
+**Structure** (dossier `~/.claude/skills/init-gitignore/`) :
+
+```
+init-gitignore/
+├── SKILL.md       # le déroulé : quoi demander, quoi lire, quoi écrire
+└── templates.md   # les patterns, une section par valeur
+```
+
+**Le `SKILL.md`**
+
+- En-tête (frontmatter) : `name` et `description`. La description sert à Claude pour décider de charger le skill : elle dit *ce qu'il fait* et *quand l'utiliser* (« initialiser, générer, créer un `.gitignore` »).
+- Corps : les étapes ci-dessous.
+
+**Le déroulé**
+
+1. **Questions en un seul appel** (`AskUserQuestion`, choix multiples, « Autre » toujours possible) :
+
+   | Question | Choix proposés |
+   |---|---|
+   | Langage | Python, JavaScript/TypeScript, Java, Go, C# |
+   | Framework | dépend du langage (Python : Flask, Django ; JS/TS : Node, React, Next.js ; Java : Maven, Gradle ; Go/C# : aucun), plus « Aucun » |
+   | Éditeur | VS Code, JetBrains, Vim, Visual Studio |
+
+   Limite de 4 options par question : les plus courantes en premier.
+2. **Lecture de `templates.md`** : chaque section `## Catégorie: Nom` est la source unique des patterns. Le skill prend les sections qui correspondent aux réponses, plus `Common: OS` (toujours incluse).
+3. **Valeur non gérée** : pas de patterns inventés. Le skill le signale et demande s'il faut l'ignorer ou s'arrêter.
+4. **`.gitignore` déjà présent** : choix entre écraser, fusionner (ajouter seulement les patterns manquants) ou annuler. Rien n'est modifié avant la réponse.
+5. **Écriture** : un bloc par section, précédé d'un commentaire `# Nom`, sans doublon.
+6. **Compte rendu** : chemin du fichier et sections incluses.
+
+**Ce que ça illustre**
+
+- **Poser des questions plutôt que deviner** : le choix langage / framework / éditeur est demandé, et le skill s'arrête si la réponse n'est pas couverte.
+- **DRY** : les patterns vivent uniquement dans `templates.md`. Pour gérer un nouveau langage, on ajoute une section dans ce fichier et on l'ajoute à la liste de l'étape 1, sans copier de patterns dans `SKILL.md`.
+- **Sécurité** : jamais d'écrasement d'un fichier existant sans accord explicite.
+
+**Installation** : le skill a été ajouté dans un autre projet puis se retrouve dans `~/.claude/skills/`, donc disponible partout. Pour le limiter à un dépôt, le placer dans `.claude/skills/init-gitignore/`.
+
+**Utilisation** : `/init-gitignore`, ou une phrase du type « crée un `.gitignore` ».
+
+
+---
+
+## 6. Versionnement : `.gitignore`
+
+Généré avec le skill `init-gitignore`. Il couvre : fichiers système (`.DS_Store`, `Thumbs.db`), Python (`__pycache__`, `.venv`, `.env`, caches de tests), Flask (`instance/`, bases SQLite) et VS Code (on garde seulement les fichiers de config partageables).
+
+Le `.env` ignoré va avec la règle `deny` de la section 2 : un secret ne doit ni être lu par Claude ni finir dans git.
+
+---
+
+## 7. Ressources
 
 - Documentation Claude Code : https://docs.claude.com/en/docs/claude-code
