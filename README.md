@@ -9,7 +9,7 @@ Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https
 3. [Les trois niveaux de configuration](#3-les-trois-niveaux-de-configuration)
 4. [Hooks](#4-hooks)
 5. [Skills](#5-skills)
-6. [Versionnement : `.gitignore`](#6-versionnement--gitignore)
+6. [Barre de statut : `statusLine`](#6-barre-de-statut--statusline)
 7. [Ressources](#7-ressources)
 
 ---
@@ -146,14 +146,34 @@ init-gitignore/
 
 ---
 
-## 6. Versionnement : `.gitignore`
+## 6. Barre de statut : `statusLine`
 
-Généré avec le skill `init-gitignore`. Il couvre : fichiers système (`.DS_Store`, `Thumbs.db`), Python (`__pycache__`, `.venv`, `.env`, caches de tests), Flask (`instance/`, bases SQLite) et VS Code (on garde seulement les fichiers de config partageables).
+**À quoi ça sert** : afficher en permanence, sous le champ de saisie, l'état de la session (dépôt, branche, consommation, modèle…). Claude Code exécute une commande à chaque mise à jour et affiche sa sortie.
 
-Le `.env` ignoré va avec la règle `deny` de la section 2 : un secret ne doit ni être lu par Claude ni finir dans git.
+**Où** : clé `statusLine` de `~/.claude/settings.json`, qui pointe vers un script :
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "bash C:/Users/Maki/.claude/statusline-command.sh"
+}
+```
+
+**Le script** (`~/.claude/statusline-command.sh`) lit sur l'entrée standard un JSON fourni par Claude Code (modèle, répertoire, coût, lignes ajoutées/supprimées, limites d'usage) et imprime une seule ligne en couleurs truecolor (RGB 24 bits). Il utilise `jq` s'il est installé, sinon un repli en `sed`.
+
+**Ce qu'il affiche** : nom du dépôt, 🌿 branche git, emoji + barre de 20 blocs en dégradé vert → jaune → rouge pour la limite des 5 h, coût de la session, lignes ajoutées/supprimées, 🤖 modèle. Un élément dont la donnée manque est simplement omis.
+
+**Source d'inspiration** : le gist d'AKCodez, https://gist.github.com/AKCodez/ffb420ba6a7662b5c3dda2edce7783de
+
+**À savoir**
+
+- La limite des 5 h est une fenêtre glissante, pas une consommation par jour calendaire.
+- Le champ `rate_limits` n'est pas toujours fourni par Claude Code : sans lui, la barre n'apparaît pas.
+- Le script se teste hors de Claude Code en lui envoyant un JSON d'exemple : `echo '{"model":{"display_name":"Sonnet"}}' | bash ~/.claude/statusline-command.sh`.
 
 ---
 
 ## 7. Ressources
 
 - Documentation Claude Code : https://docs.claude.com/en/docs/claude-code
+- Gist de status line d'AKCodez : https://gist.github.com/AKCodez/ffb420ba6a7662b5c3dda2edce7783de
