@@ -10,7 +10,8 @@ Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https
 4. [Hooks](#4-hooks)
 5. [Skills](#5-skills)
 6. [Barre de statut : `statusLine`](#6-barre-de-statut--statusline)
-7. [Ressources](#7-ressources)
+7. [MCP : GitHub et Claude Design](#7-mcp--github-et-claude-design)
+8. [Ressources](#8-ressources)
 
 ---
 
@@ -173,7 +174,51 @@ init-gitignore/
 
 ---
 
-## 7. Ressources
+## 7. MCP : GitHub et Claude Design
+
+**Principe** : un serveur MCP (Model Context Protocol) donne à Claude des outils supplémentaires pour parler à un service externe. J'en ai ajouté deux :
+
+| Serveur | Ce qu'il apporte |
+|---|---|
+| GitHub | agir sur GitHub (dépôts, issues, pull requests) sans passer par la ligne de commande |
+| Claude Design | travailler sur des designs depuis Claude |
+
+Voir les serveurs actifs et leurs outils : commande `/mcp` dans Claude Code.
+
+### Warnings
+
+- **Un MCP agit vraiment** : ce n'est pas une simple lecture. Un outil MCP peut créer, modifier ou supprimer des choses chez le service externe, parfois de façon difficile à annuler.
+- **Les droits de Claude = les droits de mon compte** : si l'autorisation donnée à GitHub est large, tout ce que Claude peut faire l'est aussi.
+- **Du contenu externe n'est pas fiable** : une issue, une pull request ou un fichier lu via MCP peut contenir des instructions cachées (*prompt injection*). Claude doit les traiter comme des données, jamais comme des ordres.
+- **Chaque outil coûte du contexte** : leurs descriptions sont chargées dans la conversation, ce qui la remplit plus vite et peut brouiller le choix des outils.
+
+### Utiliser les MCP avec parcimonie
+
+- N'activer que les serveurs utiles à la tâche en cours, et désactiver le reste (`/mcp`).
+- Ne pas ajouter un serveur « au cas où » : chaque ajout agrandit la surface d'attaque et le contexte consommé.
+- Préférer un serveur dont je connais la source (éditeur officiel) à un serveur trouvé au hasard : il s'exécute avec mes droits.
+
+### Sécurité
+
+- **Moindre privilège** : donner à GitHub l'accès minimal nécessaire (dépôts concernés, lecture seule si l'écriture n'est pas utile), et jamais plus.
+- **Secrets** : un token ne va ni dans le README, ni dans un fichier versionné. Le `.env` reste couvert par la règle `deny` de la section 2.
+- **Permissions** : traiter les outils MCP comme le reste (section 2) : lecture autorisée, écriture (créer, fusionner, supprimer) en `ask`, actions destructrices en `deny`.
+- **Relire avant de valider** : toute action d'écriture visible de l'extérieur (publier, fusionner, commenter) est relue avant d'être acceptée.
+
+### Ne pas utiliser un MCP quand un autre outil existe
+
+- **Règle** : si un outil intégré ou une commande locale fait le même travail, je l'utilise à la place du MCP.
+- **Exemples** : pour l'état d'un dépôt local, `git status`, `git diff` et `git log` (déjà en `allow`) ; pour pousser, `git push` ou la CLI `gh`. Le MCP GitHub est réservé à ce qu'ils ne font pas bien.
+- **Pourquoi** : un outil local est plus rapide, ne consomme pas de contexte en plus, passe par des permissions déjà définies et n'ouvre aucun accès externe supplémentaire.
+
+**État** : à compléter une fois vérifiés : la commande exacte d'ajout de chaque serveur, son scope (user, projet, local) et les droits accordés à GitHub.
+
+- [ ] Documenter l'installation de chaque serveur (commande, scope).
+- [ ] Noter les permissions `ask`/`deny` posées sur les outils MCP.
+
+---
+
+## 8. Ressources
 
 - Documentation Claude Code : https://docs.claude.com/en/docs/claude-code
 - Gist de status line d'AKCodez : https://gist.github.com/AKCodez/ffb420ba6a7662b5c3dda2edce7783de
