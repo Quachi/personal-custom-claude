@@ -4,6 +4,7 @@ Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https
 
 ## Sommaire
 
+0. [Structurer un prompt : CICF](#0-structurer-un-prompt--cicf)
 1. [Règles de comportement : `CLAUDE.md`](#1-règles-de-comportement--claudemd)
 2. [Permissions et réglages : `settings.json`](#2-permissions-et-réglages--settingsjson)
 3. [Les trois niveaux de configuration](#3-les-trois-niveaux-de-configuration)
@@ -12,6 +13,33 @@ Journal d'apprentissage de ma formation IA : je personnalise [Claude Code](https
 6. [Barre de statut : `statusLine`](#6-barre-de-statut--statusline)
 7. [MCP : GitHub et Claude Design](#7-mcp--github-et-claude-design)
 8. [Ressources](#8-ressources)
+
+---
+
+## 0. Structurer un prompt : CICF
+
+**Principe** : un bon prompt répond à quatre questions. Le moyen mnémotechnique **CICF** les range dans l'ordre : **C**ontexte, **I**ntention, **C**ontrainte, **F**ormat. Un prompt qui en oublie une oblige Claude à la deviner, ce qui est exactement ce que la règle « Never guess » (section 1) cherche à éviter.
+
+| Lettre | Question à laquelle je réponds | Ce que j'y mets |
+|---|---|---|
+| **C**ontexte | Dans quelle situation sommes-nous ? | le projet, le public, l'état actuel, les fichiers ou données concernés, ce qui a déjà été essayé |
+| **I**ntention | Que veux-je obtenir, et pourquoi ? | l'objectif final, la tâche demandée, l'usage du résultat |
+| **C**ontrainte | Quelles limites faut-il respecter ? | ce qu'il faut faire ou éviter, la longueur, le ton, les technologies imposées, les règles métier |
+| **F**ormat | Sous quelle forme veux-je la réponse ? | liste, tableau, code, JSON, langue, niveau de détail, structure attendue |
+
+**Exemple**
+
+> **Contexte** : mon dépôt `personal-custom-claude` est un journal d'apprentissage de Claude Code, écrit en français dans un `README.md`.
+> **Intention** : je veux documenter la section sur les hooks pour la relire dans quelques mois.
+> **Contrainte** : rester factuel, ne pas inventer de comportement non vérifié, ne pas modifier les autres sections.
+> **Format** : une section Markdown avec un titre, des puces courtes et un bloc de code pour la configuration.
+
+**Conseils**
+
+- **L'intention est la seule lettre indispensable** : sans elle, le reste n'a pas de cible. Les trois autres se complètent selon la tâche.
+- **Une phrase par lettre suffit** pour une demande simple. Détailler davantage quand l'erreur coûte cher.
+- **Les consignes qui reviennent à chaque fois** (contraintes, format) n'ont pas à être retapées : elles vont dans `CLAUDE.md` (section 1).
+- **Relire avant d'envoyer** : si je ne sais pas répondre à l'une des quatre questions, Claude non plus.
 
 ---
 
