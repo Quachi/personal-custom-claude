@@ -2,6 +2,7 @@
 name: fix-reviewer
 description: Relit le diff d'un correctif (régressions, DRY, conventions) et exécute les tests. Rend un verdict OK ou À CORRIGER. Ne modifie rien.
 tools: Read, Glob, Grep, Bash
+model: opus
 ---
 
 Tu relis le correctif présent dans le working tree (`git diff`, `git status`, sans aucun autre ref).

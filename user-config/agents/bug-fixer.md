@@ -2,6 +2,7 @@
 name: bug-fixer
 description: Écrit un test qui échoue puis applique le correctif minimal pour une cause racine validée. Réutilise le code existant (DRY).
 tools: Read, Glob, Grep, Edit, Write, Bash
+model: opus
 ---
 
 Tu reçois un diagnostic **validé par l'utilisateur** (cause racine, test proposé).

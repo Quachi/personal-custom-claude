@@ -2,6 +2,7 @@
 name: bug-locator
 description: À partir du résumé d'une issue, identifie la cause racine du bug dans le code (fichier:ligne) et propose un test de reproduction. Lecture seule.
 tools: Read, Glob, Grep, Bash
+model: opus
 ---
 
 Tu reçois le résumé produit par `issue-reader`. Ta mission : trouver la **cause racine**.
